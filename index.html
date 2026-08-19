@@ -2498,186 +2498,65 @@
             });
         }
 
-        // Core Engine: Call Google AI Studio (Gemini & Imagen API) to Perform 100% Photorealistic Outfit Transformation
-        async function generateAIOutfitWithGoogleStudio(sourceCanvasOrBase64, outfitKey, customUserPrompt = '') {
-            if (!outfitKey || outfitKey === 'none') {
-                return sourceCanvasOrBase64;
+        // =========================================================================
+        // SMART FACE DETECTION & REAL-TIME OUTFIT FITTING ENGINE
+        // =========================================================================
+        async function detectPersonFaceMetrics(sourceCanvas) {
+            if (!sourceCanvas || !sourceCanvas.width || !sourceCanvas.height) {
+                return { hasFace: false, faceCenterX: 400, chinY: 480, faceHeight: 350, faceWidth: 300, angle: 0 };
             }
+            const w = sourceCanvas.width;
+            const h = sourceCanvas.height;
 
-            const apiKey = getGoogleAIStudioApiKey();
-            if (!apiKey) {
-                openGoogleApiKeyModal();
-                throw new Error("กรุณาใส่ Google AI Studio API Key ก่อนเริ่มใช้งานสวมชุด AI ครับ");
-            }
-
-            // Extract pure base64 JPEG from canvas or dataURL
-            let base64Data = '';
-            if (typeof sourceCanvasOrBase64 === 'string') {
-                base64Data = sourceCanvasOrBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-            } else if (sourceCanvasOrBase64 && sourceCanvasOrBase64.toDataURL) {
-                base64Data = sourceCanvasOrBase64.toDataURL('image/jpeg', 0.95).replace(/^data:image\/[a-z]+;base64,/, '');
-            }
-
-            const outfitItem = getOutfitTemplate(outfitKey);
-            let outfitDescription = '';
-            if (outfitKey === 'custom_prompt') {
-                outfitDescription = customUserPrompt.trim() || 'formal studio portrait suit';
-            } else {
-                outfitDescription = outfitItem.prompt || 'formal tailored business suit';
-            }
-
-            const promptText = `TASK: You are a world-class studio portrait photographer. Replace the clothing of the person in the input photo with the following official attire: ${outfitDescription}.
-STRICT MANDATORY RULES:
-1. FACIAL PRESERVATION: Retain the person's EXACT face, facial features, eyes, nose, mouth, skin complexion, hair, age, gender, identity, and expression 100% unaltered.
-2. ANATOMICAL BLENDING: Flawlessly blend the neck, collar, shoulder width, and chest with the new outfit. There must be zero visible cuts, zero mismatches, and natural neck lighting.
-3. OFFICIAL STUDIO LIGHTING: High-definition studio portrait photo quality with realistic textile textures.
-4. Clean solid background.
-Generate the complete photorealistic portrait.`;
-
-            // 1. Discover Available Models for this user's API Key dynamically
-            let candidateEndpoints = [];
-            try {
-                const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-                if (listResp.ok) {
-                    const listData = await listResp.json();
-                    const availableModels = (listData.models || []).map(m => m.name.replace(/^models\//, ''));
-                    console.log("Discovered Google AI Studio models for key:", availableModels);
-
-                    // A. Prioritize Imagen 3 models
-                    const imagenModels = availableModels.filter(m => m.includes('imagen-3') || m.includes('imagen'));
-                    imagenModels.forEach(modelName => {
-                        candidateEndpoints.push({
-                            name: modelName,
-                            type: 'imagen',
-                            url: `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${apiKey}`,
-                            payload: {
-                                instances: [
-                                    {
-                                        prompt: `Official formal studio passport ID photo portrait of a person wearing ${outfitDescription}. Sharp focus, clean solid background, photorealistic, professional lighting.`
-                                    }
-                                ],
-                                parameters: {
-                                    sampleCount: 1,
-                                    aspectRatio: "3:4"
-                                }
-                            }
-                        });
-                    });
-
-                    // B. Add Flash & Multimodal Gemini models
-                    const geminiModels = availableModels.filter(m => (m.includes('flash') || m.includes('pro') || m.includes('gemini')) && !m.includes('embedding'));
-                    geminiModels.forEach(modelName => {
-                        candidateEndpoints.push({
-                            name: modelName,
-                            type: 'gemini',
-                            url: `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
-                            payload: {
-                                contents: [
-                                    {
-                                        parts: [
-                                            {
-                                                inlineData: {
-                                                    mimeType: "image/jpeg",
-                                                    data: base64Data
-                                                }
-                                            },
-                                            {
-                                                text: `You are a master studio portrait retoucher. Modify the clothing of this person to: ${outfitDescription}. Preserve 100% of their face, identity, hair, expression and features unaltered. Generate the photorealistic blended result.`
-                                            }
-                                        ]
-                                    }
-                                ],
-                                generationConfig: {
-                                    responseModalities: ["TEXT", "IMAGE"],
-                                    temperature: 0.2
-                                }
-                            }
-                        });
-                    });
-                }
-            } catch (err) {
-                console.warn("Dynamic model discovery failed:", err);
-            }
-
-            // Fallback endpoints if dynamic discovery returns empty
-            if (candidateEndpoints.length === 0) {
-                candidateEndpoints = [
-                    {
-                        name: "imagen-3.0-generate-002",
-                        type: "imagen",
-                        url: `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
-                        payload: {
-                            instances: [{ prompt: `Official formal studio passport ID photo portrait of a person wearing ${outfitDescription}. Sharp focus, clean solid background, photorealistic, professional lighting.` }],
-                            parameters: { sampleCount: 1, aspectRatio: "3:4" }
-                        }
-                    },
-                    {
-                        name: "imagen-3.0-fast-generate-001",
-                        type: "imagen",
-                        url: `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-fast-generate-001:predict?key=${apiKey}`,
-                        payload: {
-                            instances: [{ prompt: `Official formal studio passport ID photo portrait of a person wearing ${outfitDescription}. Sharp focus, clean solid background, photorealistic.` }],
-                            parameters: { sampleCount: 1, aspectRatio: "3:4" }
-                        }
-                    },
-                    {
-                        name: "gemini-1.5-flash",
-                        type: "gemini",
-                        url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-                        payload: {
-                            contents: [{
-                                parts: [
-                                    { inlineData: { mimeType: "image/jpeg", data: base64Data } },
-                                    { text: `Modify clothing to: ${outfitDescription}. Retain identical facial identity.` }
-                                ]
-                            }],
-                            generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
-                        }
-                    }
-                ];
-            }
-
-            let lastErrorMessage = '';
-            for (const item of candidateEndpoints) {
+            if ('FaceDetector' in window) {
                 try {
-                    const res = await fetch(item.url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(item.payload)
-                    });
+                    const detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+                    const faces = await detector.detect(sourceCanvas);
+                    if (faces && faces.length > 0) {
+                        const face = faces[0];
+                        const box = face.boundingBox;
+                        const landmarks = face.landmarks || [];
+                        
+                        const faceCenterX = box.left + (box.width / 2);
+                        const chinY = box.top + box.height;
+                        const faceWidth = box.width;
+                        const faceHeight = box.height;
 
-                    if (!res.ok) {
-                        const errData = await res.json().catch(() => ({}));
-                        lastErrorMessage = errData.error?.message || `HTTP ${res.status}`;
-                        console.warn(`Model ${item.name} failed:`, lastErrorMessage);
-                        continue;
-                    }
-
-                    const resJson = await res.json();
-
-                    // Check Imagen format
-                    if (resJson.predictions && resJson.predictions[0] && resJson.predictions[0].bytesBase64Encoded) {
-                        const dataUrl = 'data:image/jpeg;base64,' + resJson.predictions[0].bytesBase64Encoded;
-                        return await dataUrlToCanvas(dataUrl);
-                    }
-
-                    // Check Gemini candidate image parts
-                    if (resJson.candidates && resJson.candidates[0] && resJson.candidates[0].content && resJson.candidates[0].content.parts) {
-                        for (const part of resJson.candidates[0].content.parts) {
-                            if (part.inlineData && part.inlineData.data) {
-                                const mime = part.inlineData.mimeType || 'image/jpeg';
-                                const dataUrl = `data:${mime};base64,${part.inlineData.data}`;
-                                return await dataUrlToCanvas(dataUrl);
+                        let headAngle = 0;
+                        if (landmarks.length >= 2) {
+                            const leftEye = landmarks.find(item => /left.*eye/i.test(item.type));
+                            const rightEye = landmarks.find(item => /right.*eye/i.test(item.type));
+                            const leftPoint = getLandmarkPoint(leftEye);
+                            const rightPoint = getLandmarkPoint(rightEye);
+                            if (leftPoint && rightPoint) {
+                                headAngle = Math.atan2(rightPoint.y - leftPoint.y, rightPoint.x - leftPoint.x) * 180 / Math.PI;
                             }
                         }
+
+                        return {
+                            hasFace: true,
+                            faceCenterX,
+                            chinY,
+                            faceHeight: Math.max(50, faceHeight),
+                            faceWidth: Math.max(50, faceWidth),
+                            angle: headAngle,
+                            box
+                        };
                     }
                 } catch (e) {
-                    lastErrorMessage = e.message;
-                    console.warn(`Fetch error for ${item.name}:`, e);
+                    console.warn("Face detector in detectPersonFaceMetrics failed:", e);
                 }
             }
 
-            throw new Error(`Google AI Studio: ${lastErrorMessage || 'ไม่สามารถสร้างภาพได้ กรุณาตรวจสอบ API Key'}`);
+            // High quality fallback: Intelligent heuristic for standard studio / ID photos
+            return {
+                hasFace: false,
+                faceCenterX: w / 2,
+                chinY: h * 0.46,
+                faceHeight: h * 0.36,
+                faceWidth: w * 0.36,
+                angle: 0
+            };
         }
 
         // Helper to convert dataUrl to an HTMLCanvasElement
@@ -2698,51 +2577,97 @@ Generate the complete photorealistic portrait.`;
             });
         }
 
+        // Core Smart Outfit Compositing Engine: In-browser high-precision face & collar alignment
+        async function compositeSmartOutfit(sourceCanvas, outfitKey) {
+            if (!outfitKey || outfitKey === 'none') return sourceCanvas;
+            const tmpl = getOutfitTemplate(outfitKey);
+            if (!tmpl) return sourceCanvas;
+            
+            const imgPath = tmpl.image || 'outfits/men_suit_black.png';
+            const outfitImg = await new Promise((resolve) => {
+                const img = new Image();
+                if (!imgPath.startsWith('data:')) img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    console.warn("Could not load outfit image:", imgPath);
+                    resolve(null);
+                };
+                img.src = imgPath;
+            });
+            if (!outfitImg) return sourceCanvas;
+
+            const pW = sourceCanvas.width;
+            const pH = sourceCanvas.height;
+            const bounds = ManualOutfitStudio.getVisibleImageBounds(outfitImg);
+            const faceMetrics = await detectPersonFaceMetrics(sourceCanvas);
+
+            let targetCollarY, suitScale, rotation = 0, targetCenterX = pW / 2;
+            if (faceMetrics && faceMetrics.hasFace) {
+                targetCenterX = faceMetrics.faceCenterX;
+                const desiredSuitWidth = Math.min(pW * 1.08, Math.max(faceMetrics.faceHeight * 2.65, faceMetrics.faceWidth * 2.25));
+                suitScale = desiredSuitWidth / Math.max(50, bounds.visibleWidth);
+                targetCollarY = faceMetrics.chinY + (faceMetrics.faceHeight * 0.04);
+                rotation = Math.max(-25, Math.min(25, faceMetrics.angle || 0));
+            } else {
+                suitScale = (pW * 0.98) / Math.max(50, bounds.visibleWidth);
+                targetCollarY = pH * 0.42;
+            }
+
+            const oW = outfitImg.naturalWidth || outfitImg.width;
+            const oH = outfitImg.naturalHeight || outfitImg.height;
+            const offset_x = bounds.centerX - (oW / 2);
+            const offset_y = bounds.minY - (oH / 2);
+            const posX = targetCenterX - (offset_x * suitScale);
+            const posY = targetCollarY - (offset_y * suitScale);
+
+            const resultCanvas = document.createElement('canvas');
+            resultCanvas.width = pW;
+            resultCanvas.height = pH;
+            const rCtx = resultCanvas.getContext('2d');
+
+            // 1. Draw Person Layer (bottom)
+            rCtx.drawImage(sourceCanvas, 0, 0);
+
+            // 2. Draw Outfit Layer (top)
+            rCtx.save();
+            rCtx.translate(posX, posY);
+            if (rotation !== 0) rCtx.rotate(rotation * Math.PI / 180);
+            rCtx.scale(suitScale, suitScale);
+            rCtx.drawImage(outfitImg, -oW / 2, -oH / 2);
+            rCtx.restore();
+
+            return resultCanvas;
+        }
+
+        // Backward compatibility alias
+        async function generateAIOutfitWithGoogleStudio(sourceCanvasOrBase64, outfitKey, customUserPrompt = '') {
+            let canvasInput = sourceCanvasOrBase64;
+            if (typeof sourceCanvasOrBase64 === 'string') {
+                canvasInput = await dataUrlToCanvas(sourceCanvasOrBase64);
+            }
+            return await compositeSmartOutfit(canvasInput, outfitKey);
+        }
+
         // Step 2 Generate AI Outfit Button Listener
         function initStep2AiOutfitExecution() {
             document.getElementById('executeStep2AiOutfitBtn')?.addEventListener('click', async function() {
                 if (selectedOutfitId === 'none') {
-                    alert("กรุณาเลือกแบบชุดที่ต้องการก่อนสั่ง AI ครับ");
-                    return;
-                }
-                const apiKey = getGoogleAIStudioApiKey();
-                if (!apiKey) {
-                    openGoogleApiKeyModal();
+                    alert("กรุณาเลือกแบบชุดที่ต้องการก่อนครับ");
                     return;
                 }
 
-                showLoader("✨ Google AI Studio กำลังสวมชุดเสมือนจริงและผสานใบหน้า...");
-                try {
-                    const customPromptVal = document.getElementById('manualCustomPromptInput')?.value?.trim() || '';
-                    const baseCanvas = originalStep2PersonCanvas || canvas;
-                    const aiResultCanvas = await generateAIOutfitWithGoogleStudio(
-                        baseCanvas,
-                        selectedOutfitId,
-                        customPromptVal
-                    );
-
-                    originalStep2PersonCanvas = aiResultCanvas;
-
-                    // Add top padding for cropper
-                    const paddedCanvas = document.createElement('canvas');
-                    const tp = aiResultCanvas.height * 0.25;
-                    paddedCanvas.width = aiResultCanvas.width;
-                    paddedCanvas.height = aiResultCanvas.height + tp;
-                    const pCtx = paddedCanvas.getContext('2d');
-                    pCtx.fillStyle = selectedBgColor;
-                    pCtx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
-                    pCtx.drawImage(aiResultCanvas, 0, tp);
-
-                    if (cropper) {
-                        cropper.replace(paddedCanvas.toDataURL('image/png'), true);
+                showLoader("✨ กำลังตรวจจับใบหน้าและจัดวางชุดให้พอดีตัว...");
+                setTimeout(async () => {
+                    try {
+                        const baseCanvas = originalStep2PersonCanvas || canvas;
+                        ManualOutfitStudio.open(baseCanvas, selectedOutfitId, 2);
+                    } catch (err) {
+                        console.error("Step 2 outfit execution error:", err);
+                        ManualOutfitStudio.open(originalStep2PersonCanvas || canvas, selectedOutfitId, 2);
+                    } finally {
+                        hideLoader();
                     }
-                    hideLoader();
-                } catch (err) {
-                    hideLoader();
-                    if (confirm("⚠️ " + err.message + "\n\n💡 ต้องการเปิดสตูดิโอแก้ไขชุด & สลับเลเยอร์แบบแมนนวล (Mini-Photoshop) หรือไม่?")) {
-                        openManualOutfitStudio(selectedOutfitId);
-                    }
-                }
+                }, 80);
             });
         }
 
@@ -3274,7 +3199,7 @@ Generate the complete photorealistic portrait.`;
                 };
             },
 
-            autoFitOutfitToCanvas(doRender = true) {
+            async autoFitOutfitToCanvas(doRender = true) {
                 if (!this.outfitImage || !this.personCanvas) return;
                 const img = this.outfitImage;
                 const pW = this.personCanvas.width || 800;
@@ -3283,19 +3208,37 @@ Generate the complete photorealistic portrait.`;
                 const h = img.naturalHeight || img.height || 1000;
 
                 const bounds = this.getVisibleImageBounds(img);
-                
-                // Automatically fit the outfit shoulders to 98% of the person photo width
-                this.baseOutfitScale = (pW * 0.98) / Math.max(50, bounds.visibleWidth);
-                
+                const faceMetrics = await detectPersonFaceMetrics(this.personCanvas);
+
+                let targetCollarY;
+                let suitScale;
+                let rotation = 0;
+                let targetCenterX = pW / 2;
+
+                if (faceMetrics && faceMetrics.hasFace) {
+                    targetCenterX = faceMetrics.faceCenterX;
+                    // Standard proportional fit: suit shoulder width relative to face height & width
+                    const desiredSuitWidth = Math.min(pW * 1.08, Math.max(faceMetrics.faceHeight * 2.65, faceMetrics.faceWidth * 2.25));
+                    suitScale = desiredSuitWidth / Math.max(50, bounds.visibleWidth);
+                    
+                    // Align collar top opening right beneath the chin
+                    targetCollarY = faceMetrics.chinY + (faceMetrics.faceHeight * 0.04);
+                    rotation = Math.max(-25, Math.min(25, faceMetrics.angle || 0));
+                } else {
+                    suitScale = (pW * 0.98) / Math.max(50, bounds.visibleWidth);
+                    targetCollarY = pH * 0.42;
+                }
+
+                this.baseOutfitScale = suitScale;
+
                 const offset_x = bounds.centerX - (w / 2);
-                const targetCollarY = pH * 0.40;
                 const offset_y = bounds.minY - (h / 2);
 
                 this.outfitTransform = {
-                    x: (pW / 2) - (offset_x * this.baseOutfitScale),
-                    y: targetCollarY - (offset_y * this.baseOutfitScale),
-                    scale: this.baseOutfitScale,
-                    rotation: 0,
+                    x: targetCenterX - (offset_x * suitScale),
+                    y: targetCollarY - (offset_y * suitScale),
+                    scale: suitScale,
+                    rotation: rotation,
                     flipH: false,
                     opacity: 1.0
                 };
@@ -3317,8 +3260,8 @@ Generate the complete photorealistic portrait.`;
                 if (!imgPath.startsWith('data:')) {
                     img.crossOrigin = 'anonymous';
                 }
-                img.onload = () => {
-                    this.setOutfitImage(img);
+                img.onload = async () => {
+                    await this.setOutfitImage(img);
                     if (callback) callback();
                 };
                 img.onerror = () => {
@@ -3328,7 +3271,7 @@ Generate the complete photorealistic portrait.`;
                 img.src = imgPath;
             },
 
-            setOutfitImage(img) {
+            async setOutfitImage(img) {
                 this.outfitImage = img;
                 const oW = img.naturalWidth || img.width || 1000;
                 const oH = img.naturalHeight || img.height || 1000;
@@ -3340,8 +3283,8 @@ Generate the complete photorealistic portrait.`;
                 this.outfitMaskCtx.fillStyle = '#ffffff';
                 this.outfitMaskCtx.fillRect(0, 0, oW, oH);
 
-                // Auto-fit outfit to canvas boundaries
-                this.autoFitOutfitToCanvas(false);
+                // Auto-fit outfit to canvas boundaries & detected face
+                await this.autoFitOutfitToCanvas(false);
                 this.syncTransformUI();
                 this.render();
             },
@@ -3431,8 +3374,8 @@ Generate the complete photorealistic portrait.`;
                 });
             },
 
-            resetOutfitTransform(doRender = true) {
-                this.autoFitOutfitToCanvas(doRender);
+            async resetOutfitTransform(doRender = true) {
+                await this.autoFitOutfitToCanvas(doRender);
             },
 
             resetPersonTransform(doRender = true) {
@@ -3456,8 +3399,8 @@ Generate the complete photorealistic portrait.`;
                 }
             },
 
-            autoAlignOutfit() {
-                this.autoFitOutfitToCanvas(true);
+            async autoAlignOutfit() {
+                await this.autoFitOutfitToCanvas(true);
             },
 
             setActiveLayer(layerName) {
@@ -4599,21 +4542,16 @@ Generate the complete photorealistic portrait.`;
                     }
                 }
 
-                // 3.5. Google AI Studio Generative Outfit Transformation Pass (if selected)
+                // 3.5. Smart Outfit Transformation Pass (if selected)
                 if (autoSelectedOutfitId && autoSelectedOutfitId !== 'none') {
-                    showLoader("✨ Google AI Studio กำลังสวมชุดเสมือนจริงและผสานใบหน้าอย่างเป็นธรรมชาติ...");
-                    const customPromptVal = document.getElementById('autoCustomPromptInput')?.value?.trim() || '';
+                    showLoader("✨ ระบบกำลังตรวจจับใบหน้าและสวมชุดให้พอดีตัวอัตโนมัติ...");
                     try {
-                        processedCanvas = await generateAIOutfitWithGoogleStudio(
+                        processedCanvas = await compositeSmartOutfit(
                             processedCanvas,
-                            autoSelectedOutfitId,
-                            customPromptVal
+                            autoSelectedOutfitId
                         );
                     } catch (aiErr) {
-                        console.error("Google AI Studio auto fit error:", aiErr);
-                        hideLoader();
-                        alert("⚠️ " + aiErr.message);
-                        return;
+                        console.error("Smart auto fit error:", aiErr);
                     }
                 }
 
