@@ -356,6 +356,20 @@
         #manualEditToolbar #toolModeEraserBtn.bg-white { color: #8B1E22; background: white; }
         #manualEditToolbar #fitCanvasBtn { flex: 1; border-radius: 12px; }
         #eraser-workspace .editor-photo { top: 76px; }
+        #outfitStudioModal > div { height: 96dvh; }
+        #outfitStudioModal > div > div:first-child { padding: 10px 12px; gap: 8px; }
+        #outfitStudioModal > div > div:first-child p { display: none; }
+        #outfitStudioModal button { min-height: 40px; }
+        #studioViewportContainer { min-height: 180px; }
+        @media (max-width: 1023px) {
+            #outfitStudioModal > div > div:nth-child(2) { display: flex; flex-direction: column; overflow-y: auto; gap: 10px; padding: 8px; }
+            #outfitStudioModal > div > div:nth-child(2) > div:nth-child(2) { order: -1; flex: none; min-height: 260px; height: 42dvh; }
+            #outfitStudioModal > div > div:nth-child(2) > div:first-child { flex: none; max-height: none; }
+            #studioOutfitGrid { display: flex; overflow-x: auto; overflow-y: hidden; min-height: 110px; }
+            #studioOutfitGrid > * { flex: 0 0 96px; }
+            #outfitStudioModal > div > div:nth-child(2) > div:last-child { overflow: visible; flex: none; }
+            #cancelOutfitStudioBtn { display: none; }
+        }
     </style>
 </head>
 <body class="text-[#2B2121] antialiased pt-20 pb-28 px-2 sm:px-4 md:px-6 lg:px-8 w-full max-w-[1760px] mx-auto">
@@ -3970,7 +3984,7 @@
 
                     const transform = this.getActiveTransform();
                     const centerScreen = this.personCanvasToScreen(transform.x, transform.y);
-                    this.dragState.startDist = Math.max(15, Math.hypot(pos.clientX - centerScreen.x, pos.clientY - centerScreen.y));
+                    this.dragState.startDist = Math.max(15, Math.hypot(pos.screenX - centerScreen.x, pos.screenY - centerScreen.y));
                     this.dragState.startScale = transform.scale;
                     this.dragState.startRotation = transform.rotation;
                     this.dragState.startLayerX = transform.x;
@@ -4016,6 +4030,7 @@
                 // Mouse & Touch Move
                 const onPointerMove = (e) => {
                     if (!this.isOpen) return;
+                    if (!this.dragState.isDragging && !studioIsPinching) return;
                     if (e.cancelable) e.preventDefault();
 
                     // Two-finger pinch & pan zoom (Any tool!)
@@ -4058,7 +4073,7 @@
                         // True radial scale: dragging away from center enlarges, pulling toward center shrinks!
                         const transform = this.getActiveTransform();
                         const centerScreen = this.personCanvasToScreen(transform.x, transform.y);
-                        const currentDist = Math.hypot(pos.clientX - centerScreen.x, pos.clientY - centerScreen.y);
+                        const currentDist = Math.hypot(pos.screenX - centerScreen.x, pos.screenY - centerScreen.y);
                         const scaleRatio = currentDist / this.dragState.startDist;
                         const newScale = Math.max(0.05, this.dragState.startScale * scaleRatio);
                         transform.scale = newScale;
@@ -4068,7 +4083,7 @@
                     } else if (this.dragState.mode === 'rotate_layer') {
                         const transform = this.getActiveTransform();
                         const centerScreen = this.personCanvasToScreen(transform.x, transform.y);
-                        const angleRad = Math.atan2(pos.clientY - centerScreen.y, pos.clientX - centerScreen.x);
+                        const angleRad = Math.atan2(pos.screenY - centerScreen.y, pos.screenX - centerScreen.x);
                         let angleDeg = (angleRad * 180 / Math.PI) + 90;
                         if (angleDeg > 180) angleDeg -= 360;
                         if (angleDeg < -180) angleDeg -= 360;
@@ -4114,6 +4129,7 @@
                 container.addEventListener('touchstart', onPointerDown, { passive: false });
                 window.addEventListener('touchmove', onPointerMove, { passive: false });
                 window.addEventListener('touchend', onPointerUp, { passive: false });
+                window.addEventListener('touchcancel', onPointerUp, { passive: false });
 
                 // Scroll Wheel Zoom (Always active anytime!)
                 container.addEventListener('wheel', (e) => {
@@ -6462,7 +6478,7 @@
             }
             const shareBtnText = document.getElementById('shareBtnText');
             if (shareBtnText) {
-                shareBtnText.innerText = 'แชร์';
+                shareBtnText.innerText = 'บันทึกทั้งหมด';
             }
 
             // Render Ruler and Eraser size pills
@@ -6802,7 +6818,7 @@
             const isMulti = processedSizesResults.length > 1;
             const shareBtnText = document.getElementById('shareBtnText');
             if (shareBtnText) {
-                shareBtnText.innerText = 'แชร์';
+                shareBtnText.innerText = 'บันทึกทั้งหมด';
             }
             const calcInfo = document.getElementById('calc-info');
             if (calcInfo) {
@@ -6968,7 +6984,14 @@
             });
         }
 
-        document.getElementById('shareBtn').addEventListener('click', () => openReviewExport('share'));
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            openReviewExport('save');
+            if (!exportDialog.open) return;
+            exportDialog.querySelector('input[value="both"]').checked = true;
+            document.getElementById('reviewScope').value = 'all';
+            refreshExportCount();
+            document.getElementById('reviewExportConfirm').click();
+        });
         document.getElementById('saveSingleBtn').addEventListener('click', () => openReviewExport('save'));
 
         document.getElementById('downloadZipBtn').addEventListener('click', function() {
@@ -7862,6 +7885,10 @@
             document.documentElement.style.setProperty('--editor-bottom', `${height + 12}px`);
         });
         bottomBars.forEach(bar => bottomObserver.observe(bar));
+        const studioResizeObserver = new ResizeObserver(() => {
+            if (ManualOutfitStudio.isOpen) ManualOutfitStudio.fitToScreen();
+        });
+        studioResizeObserver.observe(document.getElementById('studioViewportContainer'));
         document.getElementById('viewSheetTabBtn').parentElement.parentElement.classList.add('review-tabs');
         const rulerView = document.getElementById('single-ruler-view');
         const rulerControls = rulerView.firstElementChild;
@@ -7884,11 +7911,12 @@
         settings.appendChild(settingsSummary);
         while (exportColumn.firstChild) settings.appendChild(exportColumn.firstChild);
         exportColumn.appendChild(settings);
+        document.getElementById('downloadZipBtn').remove();
         settings.addEventListener('change', refreshSettingsSummary);
         settings.addEventListener('click', () => requestAnimationFrame(refreshSettingsSummary));
         refreshSettingsSummary();
         document.getElementById('saveSingleBtnText').textContent = 'บันทึกไฟล์';
-        document.getElementById('shareBtnText').textContent = 'แชร์';
+        document.getElementById('shareBtnText').textContent = 'บันทึกทั้งหมด';
 
         const exportDialog = document.createElement('dialog');
         exportDialog.id = 'reviewExportDialog';

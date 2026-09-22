@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snap-photo-edit-v15';
+const CACHE_NAME = 'snap-photo-edit-v16';
 const ASSETS = [
   './',
   './index.html',
