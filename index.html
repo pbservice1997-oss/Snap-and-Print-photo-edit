@@ -144,6 +144,10 @@
         .spinner { border: 4px solid #F7EBEB; border-top: 4px solid #8B1E22; border-radius: 50%; width: 44px; height: 44px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        #openGoogleApiKeyBtn, #googleApiKeyModal, #autoConfigApiKeyBtn, #manualConfigApiKeyBtn { display: none !important; }
+        #meituTools { display: flex; flex-wrap: wrap; gap: 8px; }
+        #meituTools button { padding: 10px 14px; border-radius: 14px; border: 1px solid #F0E2E2; }
+        #meituTools button[aria-pressed="true"] { background: #8B1E22; color: white; }
         #meitu-canvas-container {
             position: relative;
             width: 100%;
@@ -494,15 +498,20 @@
                         <span class="w-7 h-7 rounded-full bg-[#FAF0F0] text-[#8B1E22] flex items-center justify-center">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                         </span>
-                        แปรงปาดลบริ้วรอย & ตีนกา (สไตล์ Meitu)
+                        ซ่อมผิวและลบจุด
                     </h3>
-                    <p class="text-xs text-[#8A7D7D] font-medium mt-0.5">ปาดนิ้วทับรอยตีนกา ริ้วรอย หรือจุดด่างดำที่ต้องการลบ เมื่อยกนิ้วรอยจะลบเนียนหายไปทันที!</p>
+                    <p id="meituHint" class="text-xs text-[#8A7D7D] font-medium mt-0.5" aria-live="polite">ระบายจุดเล็ก ๆ ที่ต้องการซ่อม • ใช้สองนิ้วเลื่อนและซูม</p>
                 </div>
                 <button id="closeMeituModalBtn" class="text-[#8A7D7D] hover:text-[#8B1E22] transition p-2 rounded-full hover:bg-[#FAF0F0]">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
 
+            <div id="meituTools" aria-label="เครื่องมือซ่อมผิว">
+                <button id="meituHealBtn" aria-pressed="true">ซ่อมผิว</button>
+                <button id="meituCloneBtn" aria-pressed="false">คัดลอกผิว</button>
+                <button id="meituSourceBtn" hidden>เลือกผิวต้นทาง</button>
+            </div>
             <!-- Meitu Interactive Canvas Container -->
             <div id="meitu-canvas-container" class="w-full relative shadow-inner rounded-3xl border border-[#F0E2E2] overflow-hidden bg-[#FAF7F5]">
                 <canvas id="meitu-image-canvas"></canvas>
@@ -522,7 +531,7 @@
                     </button>
                     <button id="applyMeituBtn" class="bg-gradient-to-r from-[#8B1E22] to-[#A31D24] hover:from-[#72181B] hover:to-[#8B1E22] text-white px-5 py-2 rounded-full text-xs font-bold shadow-md shadow-[#8B1E22]/20 transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span>บันทึกรูปที่ลบริ้วรอย</span>
+                        <span>ใช้รูปนี้</span>
                     </button>
                 </div>
             </div>
@@ -1292,19 +1301,19 @@
                 <div class="bg-white p-4 sm:p-5 rounded-3xl border border-[#F0E2E2] shadow-sm flex flex-col gap-3">
                     <h3 class="text-xs font-bold text-[#2B2121] border-b border-[#F0E2E2] pb-2 flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-[#8B1E22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                        <span>แต่งแสง สี และผิวด้วย AI</span>
+                        <span>แสง สี และผิว</span>
                     </h3>
                     
                     <!-- Meitu Interactive Brush Button -->
                     <button id="openMeituBrushBtn" class="w-full bg-gradient-to-r from-[#8B1E22] via-[#A31D24] to-[#C93B41] hover:opacity-95 text-white p-3 rounded-full font-bold shadow-md shadow-[#8B1E22]/20 flex items-center justify-center transition active:scale-95 text-xs sm:text-sm">
                         <svg class="w-4 h-4 mr-2 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        <span>แปรงลบริ้วรอยและจุดด่างดำ</span>
+                        <span>ซ่อมผิว / ลบจุด</span>
                     </button>
 
                     <!-- AI 1-Click Auto Beauty Button -->
                     <button id="aiAutoRetouchBtn" class="w-full bg-[#FAF0F0] hover:bg-[#F5E2E2] text-[#8B1E22] border border-[#F0E2E2] p-3 rounded-full font-bold shadow-xs flex items-center justify-center transition active:scale-95 text-xs sm:text-sm">
                         <svg class="w-4 h-4 mr-2 text-[#8B1E22] animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
-                        <span>แต่งผิวอัตโนมัติด้วย AI</span>
+                        <span>ปรับแสงและผิวอัตโนมัติ</span>
                     </button>
 
                     <div class="grid grid-cols-2 gap-x-3 gap-y-2.5 pt-1">
@@ -2359,7 +2368,7 @@
             
             // Built-in outfits not deleted
             Object.values(DEFAULT_BUILTIN_OUTFITS).forEach(item => {
-                if (!deletedBuiltinOutfitIds.includes(item.id)) {
+                if (item.id !== 'custom_prompt' && !deletedBuiltinOutfitIds.includes(item.id)) {
                     list.push(item);
                 }
             });
@@ -2509,6 +2518,7 @@
         }
 
         function openGoogleApiKeyModal() {
+            return; // Paid AI configuration is temporarily disabled.
             const modal = document.getElementById('googleApiKeyModal');
             if (!modal) return;
             const inputEl = document.getElementById('googleApiKeyInput');
@@ -5869,7 +5879,7 @@
 
         // AI 1-Click Auto Beauty Retouch Function
         document.getElementById('aiAutoRetouchBtn').addEventListener('click', function() {
-            showLoader("AI กำลังปรับแต่งผิวลบริ้วรอย ออร่าสวยใส...");
+            showLoader("กำลังปรับแสงและสีผิว...");
             setTimeout(() => {
                 document.getElementById('brightness').value = 106;
                 document.getElementById('contrast').value = 104;
@@ -5898,6 +5908,39 @@
         let meituTransform = { x: 0, y: 0, scale: 1.0 };
         let meituInitialFocalPoint = { x: 0, y: 0 };
         let meituInitialTransform = { x: 0, y: 0 };
+        let meituMode = 'heal', meituSource = null, meituPickingSource = false;
+        let meituStrokeStart = null;
+        function setMeituMode(mode) {
+            meituMode = mode;
+            meituPickingSource = mode === 'clone' && !meituSource;
+            document.getElementById('meituHealBtn').setAttribute('aria-pressed', mode === 'heal');
+            document.getElementById('meituCloneBtn').setAttribute('aria-pressed', mode === 'clone');
+            document.getElementById('meituSourceBtn').hidden = mode !== 'clone';
+            document.getElementById('meituHint').textContent = mode === 'heal'
+                ? 'ระบายจุดเล็ก ๆ ที่ต้องการซ่อม • ใช้สองนิ้วเลื่อนและซูม'
+                : meituPickingSource ? 'แตะผิวสะอาดใกล้สร้อย เพื่อเลือกต้นทาง'
+                : 'ระบายทับสร้อยทีละช่วงสั้น ๆ • เลือกต้นทางใหม่ได้ • สองนิ้วเลื่อนและซูม';
+        }
+        document.getElementById('meituHealBtn').onclick = () => setMeituMode('heal');
+        document.getElementById('meituCloneBtn').onclick = () => setMeituMode('clone');
+        document.getElementById('meituSourceBtn').onclick = () => {
+            meituSource = null;
+            setMeituMode('clone');
+        };
+        function applyCloneSkin() {
+            const w = meituImgCanvas.width, h = meituImgCanvas.height;
+            const snapshot = document.createElement('canvas');
+            snapshot.width = w; snapshot.height = h;
+            snapshot.getContext('2d').drawImage(meituImgCanvas, 0, 0);
+            const patch = document.createElement('canvas');
+            patch.width = w; patch.height = h;
+            const ctx = patch.getContext('2d');
+            ctx.drawImage(snapshot, meituStrokeStart.x - meituSource.x, meituStrokeStart.y - meituSource.y);
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.filter = `blur(${Math.max(1, Number(document.getElementById('meituBrushSize').value) * .12)}px)`;
+            ctx.drawImage(meituMaskCanvas, 0, 0);
+            meituImgCtx.drawImage(patch, 0, 0);
+        }
 
         function applyMeituTransform() {
             const tStr = `translate(${meituTransform.x}px, ${meituTransform.y}px) scale(${meituTransform.scale})`;
@@ -5913,9 +5956,12 @@
 
         document.getElementById('openMeituBrushBtn').addEventListener('click', function() {
             if (!cropper) return;
-            showLoader("กำลังเปิดแปรงลบริ้วรอยแบบ Meitu...");
+            showLoader("กำลังเปิดเครื่องมือซ่อมผิว...");
             setTimeout(() => {
                 const highResCropped = cropper.getCroppedCanvas({ imageSmoothingEnabled: true, imageSmoothingQuality: 'high', fillColor: selectedBgColor });
+                document.getElementById('meituModal').classList.remove('hidden');
+                meituSource = null;
+                setMeituMode('heal');
                 const containerEl = document.getElementById('meitu-canvas-container');
                 const containerWidth = containerEl.clientWidth || 600;
                 const containerHeight = containerEl.clientHeight || 450;
@@ -5990,6 +6036,13 @@
             e.preventDefault();
             isMeituDrawing = true;
             const pos = getMeituPos(e);
+            if (meituPickingSource) {
+                meituSource = pos;
+                isMeituDrawing = false;
+                setMeituMode('clone');
+                return;
+            }
+            meituStrokeStart = pos;
             const r = parseInt(document.getElementById('meituBrushSize').value) || 25;
             strokeBounds = { minX: pos.x - r, minY: pos.y - r, maxX: pos.x + r, maxY: pos.y + r };
             
@@ -6066,7 +6119,8 @@
             isMeituDrawing = false;
             
             const r = parseInt(document.getElementById('meituBrushSize').value) || 25;
-            applySpotHealingOnCanvas(meituImgCtx, meituMaskCtx, strokeBounds, r);
+            if (meituMode === 'clone' && meituSource) applyCloneSkin();
+            else applySpotHealingOnCanvas(meituImgCtx, meituMaskCtx, strokeBounds, r);
             meituMaskCtx.clearRect(0, 0, meituMaskCanvas.width, meituMaskCanvas.height);
             
             if (meituHistory.length >= 15) meituHistory.shift();
@@ -6197,7 +6251,7 @@
 
                             // Micro skin-texture detail preservation
                             const origLum = 0.299 * src[idx] + 0.587 * src[idx + 1] + 0.114 * src[idx + 2];
-                            const textureDiff = (origLum - avgBoundaryLum) * 0.35;
+                            const textureDiff = 0; // Do not carry the erased necklace or blemish back into the repaired skin.
 
                             healedR = Math.min(255, Math.max(0, healedR + textureDiff));
                             healedG = Math.min(255, Math.max(0, healedG + textureDiff));
