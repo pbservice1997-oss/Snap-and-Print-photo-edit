@@ -1012,8 +1012,8 @@
                                 <span class="text-[9px] text-[#8B1E22] font-semibold">ปรับภายหลังได้</span>
                             </label>
                             <select id="autoDpiSelect" class="w-full p-2.5 border border-[#F0E2E2] rounded-2xl bg-[#FAF7F5] text-xs font-bold text-[#8B1E22]">
-                                <option value="300" selected>300 DPI (มาตรฐานพิมพ์)</option>
-                                <option value="600">600 DPI (คมชัดสูง)</option>
+                                <option value="300">300 DPI (มาตรฐานพิมพ์)</option>
+                                <option value="600" selected>600 DPI (คมชัดสูง)</option>
                                 <option value="200">200 DPI (ประหยัดไฟล์)</option>
                             </select>
                         </div>
@@ -1539,7 +1539,7 @@
                             <svg class="w-4 h-4 text-[#8B1E22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             <span>การตั้งค่าไฟล์สำหรับบันทึก</span>
                         </h3>
-                        <span id="currentDpiPill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF0F0] text-[#8B1E22] border border-[#F0E2E2]">300 DPI</span>
+                        <span id="currentDpiPill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF0F0] text-[#8B1E22] border border-[#F0E2E2]">600 DPI</span>
                     </div>
 
                     <!-- Custom DPI Controller -->
@@ -1548,16 +1548,16 @@
                             <label class="text-xs text-slate-800 font-bold flex items-center gap-1">
                                 <span>ความละเอียดการพิมพ์ (DPI)</span>
                             </label>
-                            <span class="text-[10px] text-[#8A7D7D]">ค่าเริ่มต้น 300</span>
+                            <span class="text-[10px] text-[#8A7D7D]">ค่าเริ่มต้น 600</span>
                         </div>
 
                         <!-- Quick Preset Chips -->
                         <div class="grid grid-cols-4 gap-1.5 mb-2">
-                            <button type="button" class="dpi-chip active py-1.5 px-2 text-[11px] font-bold rounded-xl border border-[#8B1E22] bg-[#8B1E22] text-white transition flex flex-col items-center cursor-pointer" data-dpi="300">
+                            <button type="button" class="dpi-chip py-1.5 px-2 text-[11px] font-bold rounded-xl border border-[#F0E2E2] bg-[#FAF7F5] text-[#2B2121] hover:border-[#8B1E22] transition flex flex-col items-center cursor-pointer" data-dpi="300">
                                 <span>300</span>
                                 <span class="text-[9px] font-normal opacity-90">มาตรฐาน</span>
                             </button>
-                            <button type="button" class="dpi-chip py-1.5 px-2 text-[11px] font-bold rounded-xl border border-[#F0E2E2] bg-[#FAF7F5] text-[#2B2121] hover:border-[#8B1E22] transition flex flex-col items-center cursor-pointer" data-dpi="600">
+                            <button type="button" class="dpi-chip active py-1.5 px-2 text-[11px] font-bold rounded-xl border border-[#8B1E22] bg-[#8B1E22] text-white transition flex flex-col items-center cursor-pointer" data-dpi="600">
                                 <span>600</span>
                                 <span class="text-[9px] font-normal text-[#8A7D7D]">คมชัดสูง</span>
                             </button>
@@ -1575,7 +1575,7 @@
                         <div id="customDpiContainer" class="hidden flex items-center gap-1.5 mb-2 pt-0.5">
                             <button type="button" id="dpiMinusBtn" class="w-8 h-8 rounded-xl bg-[#FAF7F5] hover:bg-[#F0E2E2] text-[#2B2121] font-bold text-xs border border-[#F0E2E2] flex items-center justify-center transition active:scale-95 cursor-pointer" title="ลด 50 DPI">-50</button>
                             <div class="relative flex-1">
-                                <input type="number" id="exportDpiInput" min="72" max="1200" step="10" value="300" class="w-full py-1.5 px-3 text-center border border-[#F0E2E2] rounded-xl font-bold text-xs text-[#8B1E22] bg-[#FAF7F5] focus:bg-white focus:outline-none focus:border-[#8B1E22]">
+                                <input type="number" id="exportDpiInput" min="72" max="1200" step="10" value="600" class="w-full py-1.5 px-3 text-center border border-[#F0E2E2] rounded-xl font-bold text-xs text-[#8B1E22] bg-[#FAF7F5] focus:bg-white focus:outline-none focus:border-[#8B1E22]">
                                 <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#8A7D7D] font-medium pointer-events-none">DPI</span>
                             </div>
                             <button type="button" id="dpiPlusBtn" class="w-8 h-8 rounded-xl bg-[#FAF7F5] hover:bg-[#F0E2E2] text-[#2B2121] font-bold text-xs border border-[#F0E2E2] flex items-center justify-center transition active:scale-95 cursor-pointer" title="เพิ่ม 50 DPI">+50</button>
@@ -1585,7 +1585,7 @@
                         <div id="dpiPixelInfoBadge" class="mt-2 p-2 rounded-xl bg-[#FAF7F5] border border-[#F0E2E2] text-[10.5px] text-[#8A7D7D] flex items-center justify-between">
                             <span class="flex items-center gap-1">
                                 <svg class="w-3.5 h-3.5 text-[#8B1E22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span id="dpiPixelInfoText">ขนาด 4x6" = 1200 × 1800 px</span>
+                                <span id="dpiPixelInfoText">ขนาด 4x6" = 2400 × 3600 px</span>
                             </span>
                             <span class="text-[9.5px] text-[#8B1E22] font-semibold">อัปเดตทันที</span>
                         </div>
@@ -1766,7 +1766,19 @@
         let finalMaxQualityCanvases = []; let finalPrintQualityCanvases = []; 
         let singleVisaCanvasForExport = null; 
         let currentFaceMetrics = null;
-        let currentExportDpi = parseInt(localStorage.getItem('snap_export_dpi')) || 300;
+        let currentExportDpi = (() => {
+            const savedDpi = parseInt(localStorage.getItem('snap_export_dpi'), 10);
+            const migrationKey = 'snap_default_dpi_600_migrated';
+            if (!localStorage.getItem(migrationKey)) {
+                if (!savedDpi || savedDpi === 300) {
+                    localStorage.setItem('snap_export_dpi', '600');
+                    localStorage.setItem(migrationKey, '1');
+                    return 600;
+                }
+                localStorage.setItem(migrationKey, '1');
+            }
+            return savedDpi || 600;
+        })();
         
         let currentOrderId = "รอรหัส..."; 
         let isOrderIdGenerated = false; 
@@ -6795,7 +6807,7 @@
         }
 
         function setExportDpi(dpi, shouldRebuild = true) {
-            currentExportDpi = Math.max(72, Math.min(1200, parseInt(dpi) || 300));
+            currentExportDpi = Math.max(72, Math.min(1200, parseInt(dpi) || 600));
             try {
                 localStorage.setItem('snap_export_dpi', currentExportDpi.toString());
             } catch(e) {}
@@ -7912,7 +7924,7 @@
         // DPI CONTROLS EVENT LISTENERS & INITIALIZATION
         // =========================================================================
         document.getElementById('autoDpiSelect')?.addEventListener('change', function() {
-            const val = parseInt(this.value) || 300;
+            const val = parseInt(this.value) || 600;
             setExportDpi(val, false);
         });
 
@@ -7954,7 +7966,7 @@
 
         document.getElementById('exportDpiInput')?.addEventListener('change', function() {
             let val = parseInt(this.value);
-            if (isNaN(val)) val = 300;
+            if (isNaN(val)) val = 600;
             val = Math.max(72, Math.min(1200, val));
             this.value = val;
             setExportDpi(val, true);
