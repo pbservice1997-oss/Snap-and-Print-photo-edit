@@ -1440,7 +1440,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold text-[#2B2121] flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-[#8B1E22]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                <span>ยางลบเก็บรายละเอียดขอบ/พื้นหลัง</span>
+                                <span>เก็บขอบรูป</span>
                             </span>
                             <span class="text-[10px] text-[#8B1E22] bg-[#FAF0F0] px-2.5 py-0.5 rounded-full font-bold border border-[#F0E2E2]">
                                 ลบเก็บงานส่วนเกิน
@@ -1468,11 +1468,14 @@
 
                     <!-- Comprehensive Controls Bar: Tool Mode + Brush Controls + Zoom Controls -->
                     <div class="w-full grid grid-cols-1 md:grid-cols-12 gap-2.5 p-3 bg-[#FAF7F5] rounded-3xl border border-[#F0E2E2] items-center">
-                        <!-- 1. Tool Mode (Erase vs Pan) -->
+                        <!-- 1. Tool Mode (Erase, Restore, Pan) -->
                         <div class="md:col-span-3 flex items-center gap-1 bg-white p-1 rounded-full border border-[#F0E2E2]">
                             <button type="button" id="previewToolEraseBtn" class="flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center gap-1.5 transition bg-[#8B1E22] text-white shadow-xs">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 <span>ยางลบ</span>
+                            </button>
+                            <button type="button" id="previewToolRestoreBtn" class="flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center gap-1.5 transition text-slate-600 hover:text-slate-900">
+                                <span>กู้คืน</span>
                             </button>
                             <button type="button" id="previewToolPanBtn" class="flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center gap-1.5 transition text-slate-600 hover:text-slate-900">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/></svg>
@@ -1485,16 +1488,16 @@
                             <div>
                                 <div class="flex justify-between items-center mb-0.5">
                                     <span class="text-[10px] text-slate-600 font-bold">ขนาดแปรง</span>
-                                    <span id="previewBrushSizeVal" class="text-[10px] font-bold text-[#8B1E22]">30px</span>
+                                    <span id="previewBrushSizeVal" class="text-[10px] font-bold text-[#8B1E22]">60px</span>
                                 </div>
-                                <input type="range" id="previewBrushSize" min="4" max="150" value="30" class="w-full accent-[#8B1E22] cursor-pointer">
+                                <input type="range" id="previewBrushSize" min="10" max="250" value="60" class="w-full accent-[#8B1E22] cursor-pointer">
                             </div>
                             <div>
                                 <div class="flex justify-between items-center mb-0.5">
-                                    <span class="text-[10px] text-slate-600 font-bold">ขอบฟุ้งนุ่ม</span>
-                                    <span id="previewBrushSoftnessVal" class="text-[10px] font-bold text-[#8B1E22]">6px</span>
+                                    <span class="text-[10px] text-slate-600 font-bold">ขอบนุ่ม</span>
+                                    <span id="previewBrushSoftnessVal" class="text-[10px] font-bold text-[#8B1E22]">10px</span>
                                 </div>
-                                <input type="range" id="previewBrushSoftness" min="0" max="40" value="6" class="w-full accent-[#8B1E22] cursor-pointer">
+                                <input type="range" id="previewBrushSoftness" min="0" max="50" value="10" class="w-full accent-[#8B1E22] cursor-pointer">
                             </div>
                         </div>
 
@@ -1762,6 +1765,7 @@
         let cropper; let selectedBgColor = '#FFFFFF';
         let finalMaxQualityCanvases = []; let finalPrintQualityCanvases = []; 
         let singleVisaCanvasForExport = null; 
+        let currentFaceMetrics = null;
         let currentExportDpi = parseInt(localStorage.getItem('snap_export_dpi')) || 300;
         
         let currentOrderId = "รอรหัส..."; 
@@ -1919,6 +1923,7 @@
         document.getElementById('globalRestartBtn').addEventListener('click', function() {
             const isPreviewVisible = !document.getElementById('preview-section').classList.contains('hidden');
             if (!isPreviewVisible && (document.getElementById('imageInput').value !== '' || document.getElementById('autoImageInput').value !== '')) { if (!confirm('ต้องการเริ่มทำรูปใหม่ทั้งหมดใช่หรือไม่?')) return; }
+            resetReviewWorkspace();
             document.getElementById('preview-section').classList.add('hidden'); document.getElementById('step2-section').classList.add('hidden'); document.getElementById('step1-section').classList.remove('hidden'); document.getElementById('eraser-workspace').classList.add('hidden');
             
             document.getElementById('imageInput').value = ''; 
@@ -1930,7 +1935,11 @@
                 if (el) el.value = (id==='brightness'||id==='contrast')?100:0;
             });
             document.getElementById('rotationValue').innerText = '0°'; document.querySelector('.cropper-wrapper').appendChild(document.getElementById('smart-guide'));
-            if(cropper) cropper.destroy(); window.scrollTo({ top: 0, behavior: 'smooth' }); 
+            if(cropper) { cropper.destroy(); cropper = null; }
+            document.getElementById('image-to-crop').removeAttribute('src');
+            originalUncutCanvas = null;
+            originalStep2PersonCanvas = null;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById('visaSize').value = '4x6';
             document.getElementById('faceMinMm').value = 32;
             document.getElementById('faceMaxMm').value = 36;
@@ -1951,10 +1960,13 @@
                 alert('กรุณาเลือกหรือลากไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP ฯลฯ)');
                 return;
             }
+            const runId = resetReviewWorkspace();
             const reader = new FileReader();
             reader.onload = function (event) {
+                if (runId !== reviewRunId) return;
                 const img = new Image();
                 img.onload = function() {
+                    if (runId !== reviewRunId) return;
                     document.getElementById('modeSwitcher').classList.add('hidden');
                     const scale = Math.min(1, MAX_WORKING_IMAGE_DIMENSION / Math.max(img.width, img.height));
                     canvas.width = Math.round(img.width * scale); 
@@ -2101,6 +2113,7 @@
         ];
         let processedSizesResults = [];
         let activeRulerSizeIndex = 0;
+        let reviewRunId = 0;
 
         function renderAutoSizesList() {
             const listEl = document.getElementById('autoSizesList');
@@ -4677,6 +4690,7 @@
         // =========================================================================
         async function runFullAutoPipeline(file) {
             if (!file) return;
+            const runId = resetReviewWorkspace();
             document.getElementById('modeSwitcher').classList.add('hidden');
             showLoader("AI กำลังเริ่มประมวลผลอัตโนมัติ...");
 
@@ -4693,6 +4707,7 @@
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
                 });
+                if (runId !== reviewRunId) return;
 
                 const scale = Math.min(1, MAX_WORKING_IMAGE_DIMENSION / Math.max(img.width, img.height));
                 const baseCanvas = document.createElement('canvas');
@@ -4716,6 +4731,7 @@
                                 selfieSegmentation.onResults(resolve);
                                 selfieSegmentation.send({ image: baseCanvas });
                             });
+                            if (runId !== reviewRunId) return;
 
                             const w = baseCanvas.width;
                             const h = baseCanvas.height;
@@ -4771,6 +4787,7 @@
                     try {
                         const detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
                         const faces = await detector.detect(processedCanvas);
+                        if (runId !== reviewRunId) return;
                         if (faces && faces.length > 0) {
                             const face = faces[0];
                             const box = face.boundingBox;
@@ -4840,12 +4857,14 @@
                             processedCanvas,
                             autoSelectedOutfitId
                         );
+                        if (runId !== reviewRunId) return;
                     } catch (aiErr) {
                         console.error("Smart auto fit error:", aiErr);
                     }
                 }
 
                 // 4. Process Each Selected Photo Size
+                if (runId !== reviewRunId) return;
                 processedSizesResults = [];
                 const srcW = processedCanvas.width;
                 const srcH = processedCanvas.height;
@@ -5004,12 +5023,14 @@
                 currentFaceMetrics = processedSizesResults[0].faceMetrics;
                 activeRulerSizeIndex = 0;
 
+                syncPreviewBrushSettings();
                 renderMultiSizeLayouts(false);
                 setWizardStep(3);
                 hideLoader();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
             } catch (err) {
+                if (runId !== reviewRunId) return;
                 console.error("Auto Pipeline Error:", err);
                 alert("เกิดข้อผิดพลาดในการประมวลผลอัตโนมัติ กรุณาลองใหม่อีกครั้ง");
                 hideLoader();
@@ -6569,6 +6590,7 @@
 
         // Backward compatibility wrapper for single photo mode
         function generateLayouts(visaImageCanvas, tempOrderId) {
+            syncPreviewBrushSettings();
             const size = getSelectedVisaSize();
             const copies = parseInt(document.getElementById('copies')?.value) || 4;
             const targetFaceMm = parseFloat(document.getElementById('faceTargetMm')?.value) || 34;
@@ -7272,6 +7294,52 @@
         let previewTouchSnapshot = null;
         let previewHasDrawn = false;
 
+        function syncPreviewBrushSettings() {
+            for (const [sourceId, targetId, labelId] of [
+                ['brushSize', 'previewBrushSize', 'previewBrushSizeVal'],
+                ['brushSoftness', 'previewBrushSoftness', 'previewBrushSoftnessVal']
+            ]) {
+                const value = document.getElementById(sourceId).value;
+                document.getElementById(targetId).value = value;
+                document.getElementById(labelId).textContent = `${value}px`;
+            }
+        }
+
+        function resetReviewWorkspace() {
+            reviewRunId++;
+            hideLoader();
+            processedSizesResults = [];
+            activeRulerSizeIndex = 0;
+            singleVisaCanvasForExport = null;
+            finalMaxQualityCanvases = [];
+            finalPrintQualityCanvases = [];
+            currentFaceMetrics = null;
+            currentOrderId = 'รอรหัส...';
+            isOrderIdGenerated = false;
+            document.getElementById('displayOrderId').textContent = currentOrderId;
+            previewOriginalCanvas = null;
+            previewEraserHistory = [];
+            previewEraserStep = -1;
+            isDrawingPreviewEraser = false;
+            isDraggingPreviewViewport = false;
+            previewIsPinching = false;
+            previewTouchSnapshot = null;
+            previewHasDrawn = false;
+            previewPinchDistance = null;
+            const previewCanvas = document.getElementById('preview-eraser-canvas');
+            previewCanvas.width = 0;
+            previewCanvas.height = 0;
+            for (const id of ['print-area', 'ruler-stage', 'rulerSizePills', 'eraserSizePills']) {
+                document.getElementById(id).replaceChildren();
+            }
+            document.getElementById('ruler-spec-badge').textContent = '';
+            document.getElementById('calc-info').textContent = '';
+            document.getElementById('viewSheetTabBtn').click();
+            document.getElementById('reviewExportDialog')?.close();
+            setPreviewToolMode('erase');
+            return reviewRunId;
+        }
+
         function initPreviewEraser() {
             const activeItem = processedSizesResults[activeRulerSizeIndex];
             if (activeItem) singleVisaCanvasForExport = activeItem.singleCanvas;
@@ -7362,23 +7430,16 @@
 
         function setPreviewToolMode(mode) {
             previewToolMode = mode;
-            const eraseBtn = document.getElementById('previewToolEraseBtn');
-            const panBtn = document.getElementById('previewToolPanBtn');
             const container = document.getElementById('preview-eraser-container');
-
-            if (mode === 'erase') {
-                eraseBtn?.classList.add('bg-white', 'text-pink-700', 'shadow-sm');
-                eraseBtn?.classList.remove('text-slate-600');
-                panBtn?.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
-                panBtn?.classList.add('text-slate-600');
-                if (container) container.style.cursor = 'crosshair';
-            } else {
-                panBtn?.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
-                panBtn?.classList.remove('text-slate-600');
-                eraseBtn?.classList.remove('bg-white', 'text-pink-700', 'shadow-sm');
-                eraseBtn?.classList.add('text-slate-600');
-                if (container) container.style.cursor = 'grab';
+            for (const [id, tool] of [
+                ['previewToolEraseBtn', 'erase'],
+                ['previewToolRestoreBtn', 'restore'],
+                ['previewToolPanBtn', 'pan']
+            ]) {
+                const button = document.getElementById(id);
+                button.className = `flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center gap-1.5 transition ${mode === tool ? 'bg-[#8B1E22] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`;
             }
+            if (container) container.style.cursor = mode === 'pan' ? 'grab' : 'crosshair';
         }
 
         function savePreviewEraserHistory() {
@@ -7432,7 +7493,10 @@
             singleVisaCanvasForExport = document.createElement('canvas');
             singleVisaCanvasForExport.width = pCanvas.width;
             singleVisaCanvasForExport.height = pCanvas.height;
-            singleVisaCanvasForExport.getContext('2d').drawImage(pCanvas, 0, 0);
+            const exportCtx = singleVisaCanvasForExport.getContext('2d');
+            exportCtx.fillStyle = selectedBgColor || '#FFFFFF';
+            exportCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
+            exportCtx.drawImage(pCanvas, 0, 0);
 
             // Update in processed sizes array if in auto mode
             if (processedSizesResults && processedSizesResults[activeRulerSizeIndex]) {
@@ -7440,7 +7504,10 @@
                 if (sc) {
                     sc.width = pCanvas.width;
                     sc.height = pCanvas.height;
-                    sc.getContext('2d').drawImage(pCanvas, 0, 0);
+                    const resultCtx = sc.getContext('2d');
+                    resultCtx.fillStyle = selectedBgColor || '#FFFFFF';
+                    resultCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
+                    resultCtx.drawImage(pCanvas, 0, 0);
                 }
             }
 
@@ -7486,28 +7553,54 @@
             const pCanvas = document.getElementById('preview-eraser-canvas');
             if (!pCanvas) return;
             const ctx = pCanvas.getContext('2d');
+            const radius = Number(document.getElementById('previewBrushSize').value) / 2 * (pCanvas.width / 500);
+            const softness = Number(document.getElementById('previewBrushSoftness').value) * (pCanvas.width / 500);
+            const from = previewLastPos;
 
-            const brushSize = parseInt(document.getElementById('previewBrushSize')?.value) || 30;
-            const softness = parseInt(document.getElementById('previewBrushSoftness')?.value) || 6;
-            const fillColor = selectedBgColor || '#FFFFFF';
+            const paintBrush = brushCtx => {
+                brushCtx.lineWidth = radius * 2;
+                brushCtx.lineCap = 'round';
+                brushCtx.lineJoin = 'round';
+                brushCtx.fillStyle = '#000';
+                brushCtx.strokeStyle = '#000';
+                if (softness > 0) {
+                    brushCtx.shadowBlur = softness;
+                    brushCtx.shadowColor = '#000';
+                }
+                brushCtx.beginPath();
+                brushCtx.moveTo(from.x, from.y);
+                brushCtx.lineTo(toX, toY);
+                brushCtx.stroke();
+                brushCtx.beginPath();
+                brushCtx.arc(toX, toY, radius, 0, Math.PI * 2);
+                brushCtx.fill();
+            };
 
-            ctx.save();
-            ctx.fillStyle = fillColor;
-            ctx.strokeStyle = fillColor;
-            ctx.lineWidth = brushSize;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            if (softness > 0) {
-                ctx.shadowBlur = softness;
-                ctx.shadowColor = fillColor;
+            if (previewToolMode === 'restore' && previewOriginalCanvas) {
+                const pad = Math.ceil(radius + softness * 2 + 4);
+                const minX = Math.max(0, Math.floor(Math.min(from.x, toX) - pad));
+                const minY = Math.max(0, Math.floor(Math.min(from.y, toY) - pad));
+                const maxX = Math.min(pCanvas.width, Math.ceil(Math.max(from.x, toX) + pad));
+                const maxY = Math.min(pCanvas.height, Math.ceil(Math.max(from.y, toY) + pad));
+                if (maxX > minX && maxY > minY) {
+                    const patch = document.createElement('canvas');
+                    patch.width = maxX - minX;
+                    patch.height = maxY - minY;
+                    const patchCtx = patch.getContext('2d');
+                    patchCtx.translate(-minX, -minY);
+                    paintBrush(patchCtx);
+                    patchCtx.setTransform(1, 0, 0, 1, 0, 0);
+                    patchCtx.shadowBlur = 0;
+                    patchCtx.globalCompositeOperation = 'source-in';
+                    patchCtx.drawImage(previewOriginalCanvas, minX, minY, patch.width, patch.height, 0, 0, patch.width, patch.height);
+                    ctx.drawImage(patch, minX, minY);
+                }
+            } else {
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-out';
+                paintBrush(ctx);
+                ctx.restore();
             }
-
-            ctx.beginPath();
-            ctx.moveTo(previewLastPos.x, previewLastPos.y);
-            ctx.lineTo(toX, toY);
-            ctx.stroke();
-            ctx.restore();
 
             previewLastPos = { x: toX, y: toY };
         }
@@ -7732,6 +7825,9 @@
 
         document.getElementById('previewToolEraseBtn')?.addEventListener('click', () => {
             setPreviewToolMode('erase');
+        });
+        document.getElementById('previewToolRestoreBtn')?.addEventListener('click', () => {
+            setPreviewToolMode('restore');
         });
         document.getElementById('previewToolPanBtn')?.addEventListener('click', () => {
             setPreviewToolMode('pan');
