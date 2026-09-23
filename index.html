@@ -7038,14 +7038,6 @@
             });
         }
 
-        document.getElementById('shareBtn').addEventListener('click', () => {
-            openReviewExport('save');
-            if (!exportDialog.open) return;
-            exportDialog.querySelector('input[value="both"]').checked = true;
-            document.getElementById('reviewScope').value = 'all';
-            refreshExportCount();
-            document.getElementById('reviewExportConfirm').click();
-        });
         document.getElementById('saveSingleBtn').addEventListener('click', () => openReviewExport('save'));
 
         document.getElementById('downloadZipBtn').addEventListener('click', function() {
@@ -7971,6 +7963,7 @@
         refreshSettingsSummary();
         document.getElementById('saveSingleBtnText').textContent = 'บันทึกไฟล์';
         document.getElementById('shareBtnText').textContent = 'บันทึกทั้งหมด';
+        document.getElementById('shareBtn').title = 'แชร์แผ่นพิมพ์และรูปเดี่ยวเป็นไฟล์ JPG';
 
         const exportDialog = document.createElement('dialog');
         exportDialog.id = 'reviewExportDialog';
@@ -8071,6 +8064,78 @@
                     button.textContent = reviewExportAction === 'save' ? 'บันทึกไฟล์' : 'แชร์';
                 }
             });
+        });
+
+        // Build image files synchronously so iPad Safari still has the tap's
+        // user activation when navigator.share opens the native share sheet.
+        function shareJpegFile(canvas, filename, dpi) {
+            const encoded = canvas.toDataURL('image/jpeg', 1).split(',')[1];
+            const decoded = atob(encoded);
+            const bytes = new Uint8Array(decoded.length);
+            for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
+            const view = new DataView(bytes.buffer);
+            let offset = 2;
+            while (offset + 16 < bytes.length && bytes[offset] === 0xff) {
+                const marker = bytes[offset + 1];
+                if (marker === 0xe0 && String.fromCharCode(...bytes.slice(offset + 4, offset + 9)) === 'JFIF\0') {
+                    bytes[offset + 11] = 1;
+                    view.setUint16(offset + 12, dpi, false);
+                    view.setUint16(offset + 14, dpi, false);
+                    break;
+                }
+                if (marker === 0xda || marker === 0xd9) break;
+                offset += 2 + view.getUint16(offset + 2, false);
+            }
+            return new File([bytes], filename, { type: 'image/jpeg' });
+        }
+        document.getElementById('shareBtn').addEventListener('click', async function() {
+            if (!processedSizesResults.length) return;
+            const button = this;
+            button.disabled = true;
+            try {
+                if (!isOrderIdGenerated) renderMultiSizeLayouts(true);
+                logFinalAction('แชร์/บันทึกทั้งหมด');
+                const files = [];
+                for (const item of processedSizesResults) {
+                    if (!item.singleCanvas) continue;
+                    const width = Math.round(item.widthCm / 2.54 * currentExportDpi);
+                    const height = Math.round(item.heightCm / 2.54 * currentExportDpi);
+                    let canvas = item.singleCanvas;
+                    if (Math.abs(canvas.width - width) > 2 || Math.abs(canvas.height - height) > 2) {
+                        canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(item.singleCanvas, 0, 0, width, height);
+                    }
+                    files.push(shareJpegFile(canvas, `${item.orderId}_Single_${item.widthCm}x${item.heightCm}.jpg`, currentExportDpi));
+                }
+                let sheetNumber = 0;
+                for (const item of processedSizesResults) {
+                    for (const sheet of item.sheets || []) {
+                        sheetNumber++;
+                        files.push(shareJpegFile(sheet, `${item.orderId}_Sheet_${sheetNumber}.jpg`, currentExportDpi));
+                    }
+                }
+                if (!files.length) throw new Error('ยังไม่มีรูปให้แชร์');
+                if (!navigator.share || !navigator.canShare?.({ files })) {
+                    exportDialog.querySelector('input[value="both"]').checked = true;
+                    openReviewExport('save');
+                    document.getElementById('reviewExportError').textContent = 'เครื่องนี้เปิดเมนูแชร์ไฟล์ไม่ได้ ใช้ปุ่มบันทึกไฟล์ด้านล่างแทน';
+                    return;
+                }
+                await navigator.share({ title: 'Snap&Print', files });
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    exportDialog.querySelector('input[value="both"]').checked = true;
+                    openReviewExport('save');
+                    document.getElementById('reviewExportError').textContent = 'เปิดเมนูแชร์ไม่สำเร็จ เลือกบันทึกไฟล์แทนได้';
+                    console.warn('Share all failed:', error);
+                }
+            } finally {
+                button.disabled = false;
+            }
         });
     </script>
 </body>
